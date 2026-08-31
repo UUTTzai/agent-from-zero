@@ -65,7 +65,7 @@ TOOLS = [
             },
         },
     },
-            {
+        {
         "type": "function",
         "function": {
             "name": "write_file",
@@ -76,10 +76,24 @@ TOOLS = [
                     "path": {"type": "string", "description": "要写的文件路径，例如 'test.txt'"},
                     "content":{"type":"string","description": "要写进文件的内容"}
                 },
-                "required": ["path"],
+                "required": ["path","content"],
             },
         },
-    },
+        },
+        {
+        "type": "function",
+        "function": {
+            "name": "web_search",
+            "description": "联网搜索实时信息，适用于新闻、最新动态等训练数据里没有的内容",
+            "parameters": {
+                "type": "object",
+                "properties": {
+                    "query": {"type": "string", "description": "要询问的问题"},
+                },
+                "required": ["query"],
+            },
+        },
+        },   
 ]
 
 
@@ -117,9 +131,20 @@ def execute_tool(name: str, arguments: dict) -> str:
                 path = PROJECT_DIR / path
             with open(path,'w', encoding="utf-8") as f:
                 f.write(content)
-            return print(f"已写入 {len(content)} 个字符")
+            print(f"已写入 {len(content)} 个字符")
+            return f"已写入 {len(content)} 个字符"
         except Exception as e:
             return f"写文件失败： {e}"
+    if name == "web_search":
+        try:
+            resp = client.chat.completions.create(
+                    model=MODEL,
+                    messages=[{"role": "user", "content": arguments["query"]}],
+                    extra_body={"enable_search": True},   # 百炼的搜索开关要通过 extra_body 传
+            )
+            return resp.choices[0].message.content
+        except Exception as e:
+            return f"搜索失败：{e}"
     return f"未知工具：{name}"
 
 
@@ -187,4 +212,6 @@ if __name__ == "__main__":
     # 再跑这个：模型应该调用 calculate
     # run_agent("27 乘以 43 等于多少？直接告诉我结果。")
     # run_agent("读一下 test.txt，告诉我里面写了什么？")
-    run_agent("把'今天学会了写文件'这句话写进 output.txt")
+    # run_agent("把'今天学会了写文件'这句话写进 output.txt")
+    # run_agent("搜索一下最近 AI Agent 领域的最新进展，用三句话总结")
+    run_agent("搜索今天的科技新闻，把摘要写进 news_summary.txt")
