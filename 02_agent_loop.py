@@ -9,6 +9,10 @@
 
 运行：uv run 02_agent_loop.py
 """
+"""
+阶段 1 练习 · 手写最小 Agent 循环（不使用任何框架）
+加成项 3：Token 记账
+"""
 import json  # 解析 tool_call 参数时会用到
 from datetime import datetime
 from pathlib import Path
@@ -149,12 +153,18 @@ def execute_tool(name: str, arguments: dict) -> str:
 
 
 # ---------------- 第二部分：Agent 循环（TODO：你的练习区） ----------------
+# ---------------- 第二部分：Agent 循环（加上 Token 记账） ----------------
 
 def run_agent(user_input: str, max_steps: int = 5):
     messages = [
         {"role": "system", "content": "你是一个可以使用工具的助手，需要时请调用工具获取信息。"},
         {"role": "user", "content": user_input},
     ]
+
+    # ========== 新增：累计 Token 变量 ==========
+    total_prompt_tokens = 0
+    total_completion_tokens = 0
+    total_tokens = 0
 
     for step in range(max_steps):
         print(f"\n--- 第 {step + 1} 轮 ---")
@@ -164,6 +174,15 @@ def run_agent(user_input: str, max_steps: int = 5):
         #          取出 response.choices[0].message
         response = client.chat.completions.create(model=MODEL,messages=messages,tools=TOOLS)
         message = response.choices[0].message
+        # ========== 新增：读取并累加本轮消耗 ==========
+        usage = response.usage
+        if usage:
+            prompt_tokens = usage.prompt_tokens
+            completion_tokens = usage.completion_tokens
+            total_prompt_tokens += prompt_tokens
+            total_completion_tokens += completion_tokens
+            total_tokens += usage.total_tokens
+            print(f"[本轮消耗] 输入 {prompt_tokens} / 输出 {completion_tokens} / 合计 {usage.total_tokens}")
 
         # TODO 3（进阶）：打印每一轮模型的「思考」过程，
         if message.content:
@@ -198,6 +217,16 @@ def run_agent(user_input: str, max_steps: int = 5):
                 "tool_call_id":tool_call.id,
                 "content":result,
             })
+        # ========== 新增：打印总计 ==========
+        if not message.tool_calls:
+            print(f"\n最终答案：{message.content}")
+            print("\n" + "=" * 50)
+            print("📊 Token 消耗总计")
+            print(f"  输入 Token（prompt）: {total_prompt_tokens}")
+            print(f"  输出 Token（completion）: {total_completion_tokens}")
+            print(f"  合计 Token: {total_tokens}")
+            print("=" * 50)
+            return
         # TODO 3（进阶）：打印每一轮模型的「思考」过程，
         #          观察它是如何决定调用工具的
 
@@ -210,7 +239,7 @@ if __name__ == "__main__":
     # run_agent("现在几点了？")
 
     # 再跑这个：模型应该调用 calculate
-    # run_agent("27 乘以 43 等于多少？直接告诉我结果。")
+    run_agent("27 乘以 43 等于多少？直接告诉我结果。")
     # run_agent("读一下 test.txt，告诉我里面写了什么？")
     # run_agent("把'今天学会了写文件'这句话写进 output.txt")
     # run_agent("搜索一下最近 AI Agent 领域的最新进展，用三句话总结")
