@@ -19,7 +19,7 @@ PROVIDERS = {
     "qwen": {
         "base_url": "https://dashscope.aliyuncs.com/compatible-mode/v1",
         "api_key_env": "DASHSCOPE_API_KEY",
-        "default_model": "qwen3.7-plus",
+        "default_model": "qwen3.7-flash",
     },
     # 以后拿到其他家的 Key，取消注释并在 .env 里配置对应环境变量即可
     # "deepseek": {

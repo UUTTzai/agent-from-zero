@@ -204,8 +204,15 @@ def run_agent(user_input: str, max_steps: int = 5):
         #           "tool_call_id": <对应 tool_call 的 id>,
         #           "content": <结果字符串>}
         #          然后进入下一轮循环，让模型基于工具结果继续推理
+        # ========== 新增：打印总计 ==========
         if not message.tool_calls:
             print(f"\n最终答案：{message.content}")
+            print("\n" + "=" * 50)
+            print("📊 Token 消耗总计")
+            print(f"  输入 Token（prompt）: {total_prompt_tokens}")
+            print(f"  输出 Token（completion）: {total_completion_tokens}")
+            print(f"  合计 Token: {total_tokens}")
+            print("=" * 50)
             return
         messages.append(message.model_dump())
         for tool_call in message.tool_calls:
@@ -217,16 +224,6 @@ def run_agent(user_input: str, max_steps: int = 5):
                 "tool_call_id":tool_call.id,
                 "content":result,
             })
-        # ========== 新增：打印总计 ==========
-        if not message.tool_calls:
-            print(f"\n最终答案：{message.content}")
-            print("\n" + "=" * 50)
-            print("📊 Token 消耗总计")
-            print(f"  输入 Token（prompt）: {total_prompt_tokens}")
-            print(f"  输出 Token（completion）: {total_completion_tokens}")
-            print(f"  合计 Token: {total_tokens}")
-            print("=" * 50)
-            return
         # TODO 3（进阶）：打印每一轮模型的「思考」过程，
         #          观察它是如何决定调用工具的
 
@@ -243,4 +240,4 @@ if __name__ == "__main__":
     # run_agent("读一下 test.txt，告诉我里面写了什么？")
     # run_agent("把'今天学会了写文件'这句话写进 output.txt")
     # run_agent("搜索一下最近 AI Agent 领域的最新进展，用三句话总结")
-    run_agent("搜索今天的科技新闻，把摘要写进 news_summary.txt")
+    # run_agent("搜索今天的科技新闻，把摘要写进 news_summary.txt")
